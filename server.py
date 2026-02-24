@@ -31,7 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-API_KEY = "seguridad_clinica_2024_xyz"
+API_KEY = os.getenv("API_KEY", "seguridad_clinica_2024_xyz")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # -----------------------------------------------

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ServidorFIHR
+    env: python
+    region: oregon
+    plan: starter
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 server:app
+    envVars:
+      - key: API_KEY
+        scope: build
+        value: rnd_dlkDFW2Hj1mU6OGfFT51nn2fwchv
+      - key: DATABASE_URL
+        scope: build
+        fromDatabase:
+          name: SrvidorFIHRPostgres
+          property: connectionString
