@@ -467,3 +467,81 @@ def get_logs(limit: int = 100):
     
     return [dict(log) for log in logs]
 
+
+# ─────────────────────────────────────────────
+# ENDPOINTS RENDER MCP
+# ─────────────────────────────────────────────
+
+@app.get("/render/status", dependencies=[Depends(verify_api_key)])
+def render_service_status():
+    """Obtener estado del servicio en Render"""
+    try:
+        from render_mcp import get_service_info
+        info = get_service_info()
+        return {"success": True, "data": info}
+    except Exception as e:
+        raise HTTPException(500, f"Error conectando a Render API: {str(e)}")
+
+@app.post("/render/redeploy", dependencies=[Depends(verify_api_key)])
+def render_redeploy():
+    """Triggear un redeploy del servicio"""
+    try:
+        from render_mcp import redeploy_service, log_action
+        result = redeploy_service()
+        log_action("REDEPLOY_TRIGGERED", "Service", result.get("deployId"))
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(500, f"Error triggereando redeploy: {str(e)}")
+
+@app.get("/render/deploy-status", dependencies=[Depends(verify_api_key)])
+def render_deploy_status():
+    """Monitorear estado del deploy actual"""
+    try:
+        from render_mcp import watch_deploy
+        result = watch_deploy(max_attempts=1)  # Solo una consulta
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(500, f"Error consultando deploy: {str(e)}")
+
+@app.get("/render/env-vars", dependencies=[Depends(verify_api_key)])
+def render_get_env_vars():
+    """Obtener variables de entorno del servicio en Render"""
+    try:
+        from render_mcp import get_env_vars
+        env_vars = get_env_vars()
+        # Ocultar valores sensibles
+        for var in env_vars:
+            if var.get("key") in ["API_KEY", "DATABASE_URL", "RENDER_API_KEY"]:
+                var["value"] = "***REDACTED***"
+        return {"success": True, "data": env_vars}
+    except Exception as e:
+        raise HTTPException(500, f"Error obteniendo variables: {str(e)}")
+
+@app.post("/render/env-var/{key}", dependencies=[Depends(verify_api_key)])
+def render_update_env_var(key: str, value: str):
+    """Actualizar variable de entorno en Render"""
+    try:
+        from render_mcp import update_env_var
+        result = update_env_var(key, value)
+        log_action("ENV_VAR_UPDATED", "EnvVar", key)
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(500, f"Error actualizando variable: {str(e)}")
+
+@app.get("/render/health", dependencies=[Depends(verify_api_key)])
+def render_health():
+    """Verificar conexión con Render API"""
+    try:
+        from render_mcp import RenderMCP
+        mcp = RenderMCP()
+        services = mcp.get_services()
+        return {
+            "success": True,
+            "message": "Conectado a Render API",
+            "servicesCount": len(services)
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Error: {str(e)}"
+        }
