@@ -28,7 +28,11 @@ class RenderMCP:
             headers=self.headers
         )
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        # Manejar respuesta envuelta en 'services'
+        if isinstance(data, dict) and 'services' in data:
+            return data['services']
+        return data if isinstance(data, list) else []
     
     def get_service_by_name(self, service_name: str) -> Dict:
         """Obtener un servicio por nombre"""

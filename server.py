@@ -486,9 +486,8 @@ def render_service_status():
 def render_redeploy():
     """Triggear un redeploy del servicio"""
     try:
-        from render_mcp import redeploy_service, log_action
+        from render_mcp import redeploy_service
         result = redeploy_service()
-        log_action("REDEPLOY_TRIGGERED", "Service", result.get("deployId"))
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(500, f"Error triggereando redeploy: {str(e)}")
@@ -523,7 +522,6 @@ def render_update_env_var(key: str, value: str):
     try:
         from render_mcp import update_env_var
         result = update_env_var(key, value)
-        log_action("ENV_VAR_UPDATED", "EnvVar", key)
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(500, f"Error actualizando variable: {str(e)}")
